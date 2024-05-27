@@ -1,0 +1,682 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyNsZcGKXoaXnMFzxSVKedZE",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/GLakshmiJahnavi92/PAI-EXTERNAL/blob/main/codes-pai\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Ewj3ky3xkUm-",
+        "outputId": "a9d898bf-da75-4e15-c16e-e38468c72fea"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Solution:\n",
+            "Step 1: Fill jug1\n",
+            "Step 2: Pour jug1 to jug2\n",
+            "Step 3: Empty jug2\n",
+            "Step 4: Pour jug1 to jug2\n",
+            "Step 5: Empty jug2\n",
+            "Step 6: Pour jug1 to jug2\n",
+            "Step 7: Fill jug1\n",
+            "Step 8: Pour jug1 to jug2\n"
+          ]
+        }
+      ],
+      "source": [
+        "#waterjug\n",
+        "import heapq\n",
+        "\n",
+        "class State:\n",
+        "    def __init__(self, jug1, jug2, parent=None, action=\"Initial\"):\n",
+        "        self.jug1 = jug1\n",
+        "        self.jug2 = jug2\n",
+        "        self.parent = parent\n",
+        "        self.action = action\n",
+        "        self.cost = 0\n",
+        "\n",
+        "    def __lt__(self, other):\n",
+        "        return self.cost < other.cost\n",
+        "\n",
+        "    def __eq__(self, other):\n",
+        "        return self.jug1 == other.jug1 and self.jug2 == other.jug2\n",
+        "\n",
+        "    def __hash__(self):\n",
+        "        return hash((self.jug1, self.jug2))\n",
+        "\n",
+        "def solve_water_jug_problem(capacity1, capacity2, target):\n",
+        "    initial_state = State(0, 0)\n",
+        "    open_list = []\n",
+        "    closed_set = set()\n",
+        "    heapq.heappush(open_list, initial_state)\n",
+        "\n",
+        "    while open_list:\n",
+        "        current_state = heapq.heappop(open_list)\n",
+        "\n",
+        "        if current_state.jug1 == target or current_state.jug2 == target:\n",
+        "            path = []\n",
+        "            while current_state.parent:\n",
+        "                path.append(current_state.action)\n",
+        "                current_state = current_state.parent\n",
+        "            path.reverse()\n",
+        "            return path\n",
+        "\n",
+        "        if current_state in closed_set:\n",
+        "            continue\n",
+        "\n",
+        "        closed_set.add(current_state)\n",
+        "\n",
+        "        # Fill jug1\n",
+        "        if current_state.jug1 < capacity1:\n",
+        "            new_state = State(capacity1, current_state.jug2, current_state, \"Fill jug1\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "        # Fill jug2\n",
+        "        if current_state.jug2 < capacity2:\n",
+        "            new_state = State(current_state.jug1, capacity2, current_state, \"Fill jug2\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "        # Empty jug1\n",
+        "        if current_state.jug1 > 0:\n",
+        "            new_state = State(0, current_state.jug2, current_state, \"Empty jug1\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "        # Empty jug2\n",
+        "        if current_state.jug2 > 0:\n",
+        "            new_state = State(current_state.jug1, 0, current_state, \"Empty jug2\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "        # Pour water from jug1 to jug2\n",
+        "        if current_state.jug1 > 0 and current_state.jug2 < capacity2:\n",
+        "            pour_jug1_to_jug2 = min(current_state.jug1, capacity2 - current_state.jug2)\n",
+        "            new_state = State(current_state.jug1 - pour_jug1_to_jug2, current_state.jug2 + pour_jug1_to_jug2,\n",
+        "                              current_state, \"Pour jug1 to jug2\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "        # Pour water from jug2 to jug1\n",
+        "        if current_state.jug2 > 0 and current_state.jug1 < capacity1:\n",
+        "            pour_jug2_to_jug1 = min(current_state.jug2, capacity1 - current_state.jug1)\n",
+        "            new_state = State(current_state.jug1 + pour_jug2_to_jug1, current_state.jug2 - pour_jug2_to_jug1,\n",
+        "                              current_state,\"Pour jug2 to jug1\")\n",
+        "            new_state.cost = current_state.cost + 1\n",
+        "            if new_state not in closed_set:\n",
+        "                heapq.heappush(open_list, new_state)\n",
+        "\n",
+        "    return None\n",
+        "\n",
+        "# Main function to solve the water jug problem\n",
+        "def main():\n",
+        "    capacity1 = 7  # Capacity of jug 1\n",
+        "    capacity2 = 3  # Capacity of jug 2\n",
+        "    target = 5     # Target amount of water to measure\n",
+        "\n",
+        "    solution = solve_water_jug_problem(capacity1, capacity2, target)\n",
+        "    if solution:\n",
+        "        print(\"Solution:\")\n",
+        "        for step, action in enumerate(solution):\n",
+        "            print(f\"Step {step + 1}: {action}\")\n",
+        "    else:\n",
+        "        print(\"No solution found.\")\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    main()\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#8-puzzle\n",
+        "import heapq\n",
+        "class PuzzleState:\n",
+        "    def __init__(self, board, goal, moves=0):\n",
+        "        self.board, self.goal, self.moves = board, goal, moves\n",
+        "    def __eq__(self, other):\n",
+        "        return self.board == other.board\n",
+        "    def __lt__(self, other):\n",
+        "        return (self.moves + self.heuristic()) < (other.moves + other.heuristic())\n",
+        "    def __hash__(self):\n",
+        "        return hash(str(self.board))\n",
+        "    def heuristic(self):\n",
+        "        return sum(abs((val-1)//3 - i) + abs((val-1)%3 - j) for i, row in enumerate(self.board) for j, val in enumerate(row) if val)\n",
+        "    def get_next_states(self):\n",
+        "        i, j = next((i, j) for i, row in enumerate(self.board) for j, val in enumerate(row) if not val)\n",
+        "        next_states = []\n",
+        "        for di, dj in ((0, 1), (1, 0), (0, -1), (-1, 0)):\n",
+        "            new_i, new_j = i + di, j + dj\n",
+        "            if 0 <= new_i < 3 and 0 <= new_j < 3:\n",
+        "                new_board = [row[:] for row in self.board]\n",
+        "                new_board[i][j], new_board[new_i][new_j] = new_board[new_i][new_j], new_board[i][j]\n",
+        "                next_states.append(PuzzleState(new_board, self.goal, self.moves + 1))\n",
+        "        return next_states\n",
+        "def a_star(initial_state):\n",
+        "    open_set, closed_set = [], set()\n",
+        "    heapq.heappush(open_set, initial_state)\n",
+        "    while open_set:\n",
+        "        current_state = heapq.heappop(open_set)\n",
+        "        if current_state.board == current_state.goal:\n",
+        "            return current_state.moves\n",
+        "        closed_set.add(current_state)\n",
+        "        for next_state in current_state.get_next_states():\n",
+        "            if next_state in closed_set:\n",
+        "                continue\n",
+        "            heapq.heappush(open_set, next_state)\n",
+        "    return -1\n",
+        "initial_board = [[2, 3, 8], [1, 6, 4], [7, 0, 5]]\n",
+        "goal_board = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]\n",
+        "initial_state = PuzzleState(initial_board, goal_board)\n",
+        "print(\"Number of moves:\", a_star(initial_state))\n",
+        "print(\"intial_board:\",initial_board)\n",
+        "for row in initial_board:\n",
+        "    print(row)\n",
+        "print(\"goal_board:\",goal_board)\n",
+        "for row in goal_board:\n",
+        "    print(row)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "UYa7AAuo9AEu",
+        "outputId": "1862f3b5-a8eb-4276-f6b2-401440813d57"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Number of moves: 13\n",
+            "intial_board: [[2, 3, 8], [1, 6, 4], [7, 0, 5]]\n",
+            "[2, 3, 8]\n",
+            "[1, 6, 4]\n",
+            "[7, 0, 5]\n",
+            "goal_board: [[1, 2, 3], [4, 5, 6], [7, 8, 0]]\n",
+            "[1, 2, 3]\n",
+            "[4, 5, 6]\n",
+            "[7, 8, 0]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#graph-coloring:\n",
+        "class GraphColoringCsp:\n",
+        "    def __init__(self, vertices, edges, colors):\n",
+        "        self.vertices = vertices\n",
+        "        self.edges = edges\n",
+        "        self.colors = colors\n",
+        "\n",
+        "    def is_complete(self, assignment):\n",
+        "        return len(assignment) == len(self.vertices)\n",
+        "\n",
+        "    def is_consistent(self, vertex, color, assignment):\n",
+        "        return all(assignment.get(neighbor) != color for neighbor in self.edges[vertex])\n",
+        "\n",
+        "    def backtracking_search(self, assignment={}):\n",
+        "        if self.is_complete(assignment):\n",
+        "            return assignment\n",
+        "        vertex = next(v for v in self.vertices if v not in assignment)\n",
+        "        for color in self.colors:\n",
+        "            if self.is_consistent(vertex, color, assignment):\n",
+        "                result = self.backtracking_search({**assignment, vertex: color})\n",
+        "                if result:\n",
+        "                    return result\n",
+        "        return None\n",
+        "\n",
+        "def main():\n",
+        "    vertices = ['A', 'B', 'C', 'D', 'E', 'F', 'G']\n",
+        "    edges = {\n",
+        "        'A': ['B', 'C'],\n",
+        "        'B': ['A', 'C', 'D'],\n",
+        "        'C': ['A', 'B', 'D', 'E'],\n",
+        "        'D': ['B', 'C', 'E', 'F'],\n",
+        "        'E': ['C', 'D', 'F', 'G'],\n",
+        "        'F': ['D', 'E', 'G'],\n",
+        "        'G': ['E', 'F']\n",
+        "    }\n",
+        "    colors = [\"red\", \"green\", \"blue\"]\n",
+        "\n",
+        "    solution = GraphColoringCsp(vertices, edges, colors).backtracking_search()\n",
+        "    print(\"Solution found\" if solution else \"No solution found.\")\n",
+        "    print(solution)\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    main()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "d4iPN8-8BjhT",
+        "outputId": "9d39646c-1d87-41f3-8cd1-c11774932e67"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Solution found\n",
+            "{'A': 'red', 'B': 'green', 'C': 'blue', 'D': 'red', 'E': 'green', 'F': 'blue', 'G': 'red'}\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#sudoku\n",
+        "def is_valid(board, row, col, num):\n",
+        "    for i in range(9):\n",
+        "        if board[row][i] == num or board[i][col] == num or board[3 * (row // 3) + i // 3][3 * (col // 3) + i % 3] == num:\n",
+        "            return False\n",
+        "    return True\n",
+        "def solve_sudoku(board):\n",
+        "    for row in range(9):\n",
+        "        for col in range(9):\n",
+        "            if board[row][col] == 0:\n",
+        "                for num in range(1, 10):\n",
+        "                    if is_valid(board, row, col, num):\n",
+        "                        board[row][col] = num\n",
+        "                        if solve_sudoku(board):\n",
+        "                            return True\n",
+        "                        board[row][col] = 0\n",
+        "                return False\n",
+        "    return True\n",
+        "sudoku_board = [[5, 3, 0, 0, 7, 0, 0, 0, 0], [6, 0, 0, 1, 9, 5, 0, 0, 0], [0, 9, 8, 0, 0, 0, 0, 6, 0],\n",
+        "                [8, 0, 0, 0, 6, 0, 0, 0, 3], [4, 0, 0, 8, 0, 3, 0, 0, 1], [7, 0, 0, 0, 2, 0, 0, 0, 6],\n",
+        "                [0, 6, 0, 0, 0, 0, 2, 8, 0], [0, 0, 0, 4, 1, 9, 0, 0, 5], [0, 0, 0, 0, 8, 0, 0, 7, 9]]\n",
+        "if solve_sudoku(sudoku_board):\n",
+        "    print(\"Sudoku Solved Successfully:\")\n",
+        "    [print(row) for row in sudoku_board]\n",
+        "else:\n",
+        "    print(\"No solution exists.\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "eMO93EB-D6MC",
+        "outputId": "83ce5729-0ccf-4ac3-a849-811912e322b4"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Sudoku Solved Successfully:\n",
+            "[5, 3, 4, 6, 7, 8, 9, 1, 2]\n",
+            "[6, 7, 2, 1, 9, 5, 3, 4, 8]\n",
+            "[1, 9, 8, 3, 4, 2, 5, 6, 7]\n",
+            "[8, 5, 9, 7, 6, 1, 4, 2, 3]\n",
+            "[4, 2, 6, 8, 5, 3, 7, 9, 1]\n",
+            "[7, 1, 3, 9, 2, 4, 8, 5, 6]\n",
+            "[9, 6, 1, 5, 3, 7, 2, 8, 4]\n",
+            "[2, 8, 7, 4, 1, 9, 6, 3, 5]\n",
+            "[3, 4, 5, 2, 8, 6, 1, 7, 9]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#tic-tac-toe:\n",
+        "def show(board):\n",
+        "    for i in range(0, 9, 3):\n",
+        "        print(board[i], board[i+1], board[i+2])\n",
+        "\n",
+        "def move(board, player):\n",
+        "    index = int(input(f'Player {player}: ')) - 1\n",
+        "    board[index] = player\n",
+        "\n",
+        "def won(board):\n",
+        "    for i, d in [(0, 1), (3, 1), (6, 1), (0, 3), (1, 3), (2, 3), (0, 4), (2, 2)]:\n",
+        "        if board[i] == board[i + d] == board[i + 2*d]:\n",
+        "            return True\n",
+        "    return False\n",
+        "\n",
+        "board = list(range(1, 10))\n",
+        "try:\n",
+        "    while True:\n",
+        "        show(board)\n",
+        "        move(board, 'X')\n",
+        "        if won(board):\n",
+        "            raise Exception('Player 1 won!')\n",
+        "        if all(isinstance(x, str) for x in board):\n",
+        "            raise Exception('Draw!')\n",
+        "        show(board)\n",
+        "        move(board, 'O')\n",
+        "        if won(board):\n",
+        "            raise Exception('Player 2 won!')\n",
+        "except Exception as result:\n",
+        "    show(board)\n",
+        "    print(result)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pTaEx5b3HkDp",
+        "outputId": "bdf85066-e2d0-4922-9b0b-871535fa5a2f"
+      },
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "1 2 3\n",
+            "4 5 6\n",
+            "7 8 9\n",
+            "Player X: 1\n",
+            "X 2 3\n",
+            "4 5 6\n",
+            "7 8 9\n",
+            "Player O: 2\n",
+            "X O 3\n",
+            "4 5 6\n",
+            "7 8 9\n",
+            "Player X: 5\n",
+            "X O 3\n",
+            "4 X 6\n",
+            "7 8 9\n",
+            "Player O: 3\n",
+            "X O O\n",
+            "4 X 6\n",
+            "7 8 9\n",
+            "Player X: 9\n",
+            "X O O\n",
+            "4 X 6\n",
+            "7 8 X\n",
+            "Player 1 won!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#VALUE-ITERATION:                                                                                                                                                                                                                               import numpy as np\n",
+        "import numpy as np\n",
+        "def value_iteration(P, R, gamma=0.9, theta=1e-6):\n",
+        "    V = np.zeros(len(P))\n",
+        "    while True:\n",
+        "        delta = 0\n",
+        "        for s in range(len(P)):\n",
+        "            v = V[s]\n",
+        "            V[s] = max(sum(P[s, a, s_] * (R[s, a, s_] + gamma * V[s_]) for s_ in range(len(P))) for a in range(len(P[0])))\n",
+        "            delta = max(delta, abs(v - V[s]))\n",
+        "        if delta < theta:\n",
+        "            break\n",
+        "    policy = np.zeros(len(P), dtype=int)\n",
+        "    for s in range(len(P)):\n",
+        "        policy[s] = np.argmax([sum(P[s, a, s_] * (R[s, a, s_] + gamma * V[s_]) for s_ in range(len(P))) for a in range(len(P[0]))])\n",
+        "    return policy, V\n",
+        "\n",
+        "P = np.array([[[0.7, 0.3], [0.4, 0.6]], [[0.5, 0.5], [0.6, 0.4]]])\n",
+        "R = np.array([[[5, 10], [-1, 2]], [[2, 1], [0, 3]]])\n",
+        "policy, V = value_iteration(P, R)\n",
+        "print(\"Policy:\", policy)\n",
+        "print(\"Value:\", V)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "-wK2mRNuOiT1",
+        "outputId": "64aea230-460b-46c7-c1f3-b7ab3f2a1eec"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Policy: [0 1]\n",
+            "Value: [49.27471889 43.4505436 ]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#policy-iteration:\n",
+        "import numpy as np\n",
+        "def policy_iteration(P, R, gamma=0.9):\n",
+        "    policy = np.zeros(len(P), dtype=int)\n",
+        "    V = np.zeros(len(P))\n",
+        "    while True:\n",
+        "        stable = True\n",
+        "        for s in range(len(P)):\n",
+        "            a = policy[s]\n",
+        "            new_v = sum(P[s, a, s_] * (R[s, a, s_] + gamma * V[s_]) for s_ in range(len(P)))\n",
+        "            if new_v != V[s]:\n",
+        "                V[s] = new_v\n",
+        "                stable = False\n",
+        "        if stable:\n",
+        "            break\n",
+        "        for s in range(len(P)):\n",
+        "            policy[s] = np.argmax([sum(P[s, a, s_] * (R[s, a, s_] + gamma * V[s_]) for s_ in range(len(P))) for a in range(len(P[0]))])\n",
+        "    return policy, V\n",
+        "\n",
+        "P = np.array([[[0.7, 0.3], [0.4, 0.6]], [[0.5, 0.5], [0.6, 0.4]]])\n",
+        "R = np.array([[[5, 10], [-1, 2]], [[2, 1], [0, 3]]])\n",
+        "policy, V = policy_iteration(P, R)\n",
+        "print(\"Policy:\", policy)\n",
+        "print(\"Value:\", V)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "u8AmBadbOqn5",
+        "outputId": "cf91448f-77cb-4ae4-eb37-a7a585a8cdbe"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Policy: [0 1]\n",
+            "Value: [49.27472527 43.45054945]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pip install pgmpy\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "rg4V8BBGP1Fn",
+        "outputId": "3af3dbe3-a3d2-4594-dbe3-e4c776661d69"
+      },
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting pgmpy\n",
+            "  Downloading pgmpy-0.1.25-py3-none-any.whl (2.0 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m2.0/2.0 MB\u001b[0m \u001b[31m10.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: networkx in /usr/local/lib/python3.10/dist-packages (from pgmpy) (3.3)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from pgmpy) (1.25.2)\n",
+            "Requirement already satisfied: scipy in /usr/local/lib/python3.10/dist-packages (from pgmpy) (1.11.4)\n",
+            "Requirement already satisfied: scikit-learn in /usr/local/lib/python3.10/dist-packages (from pgmpy) (1.2.2)\n",
+            "Requirement already satisfied: pandas in /usr/local/lib/python3.10/dist-packages (from pgmpy) (2.0.3)\n",
+            "Requirement already satisfied: pyparsing in /usr/local/lib/python3.10/dist-packages (from pgmpy) (3.1.2)\n",
+            "Requirement already satisfied: torch in /usr/local/lib/python3.10/dist-packages (from pgmpy) (2.3.0+cu121)\n",
+            "Requirement already satisfied: statsmodels in /usr/local/lib/python3.10/dist-packages (from pgmpy) (0.14.2)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from pgmpy) (4.66.4)\n",
+            "Requirement already satisfied: joblib in /usr/local/lib/python3.10/dist-packages (from pgmpy) (1.4.2)\n",
+            "Requirement already satisfied: opt-einsum in /usr/local/lib/python3.10/dist-packages (from pgmpy) (3.3.0)\n",
+            "Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.10/dist-packages (from pandas->pgmpy) (2.8.2)\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.10/dist-packages (from pandas->pgmpy) (2023.4)\n",
+            "Requirement already satisfied: tzdata>=2022.1 in /usr/local/lib/python3.10/dist-packages (from pandas->pgmpy) (2024.1)\n",
+            "Requirement already satisfied: threadpoolctl>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from scikit-learn->pgmpy) (3.5.0)\n",
+            "Requirement already satisfied: patsy>=0.5.6 in /usr/local/lib/python3.10/dist-packages (from statsmodels->pgmpy) (0.5.6)\n",
+            "Requirement already satisfied: packaging>=21.3 in /usr/local/lib/python3.10/dist-packages (from statsmodels->pgmpy) (24.0)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (3.14.0)\n",
+            "Requirement already satisfied: typing-extensions>=4.8.0 in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (4.11.0)\n",
+            "Requirement already satisfied: sympy in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (1.12)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (3.1.4)\n",
+            "Requirement already satisfied: fsspec in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (2023.6.0)\n",
+            "Collecting nvidia-cuda-nvrtc-cu12==12.1.105 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (23.7 MB)\n",
+            "Collecting nvidia-cuda-runtime-cu12==12.1.105 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (823 kB)\n",
+            "Collecting nvidia-cuda-cupti-cu12==12.1.105 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cuda_cupti_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (14.1 MB)\n",
+            "Collecting nvidia-cudnn-cu12==8.9.2.26 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cudnn_cu12-8.9.2.26-py3-none-manylinux1_x86_64.whl (731.7 MB)\n",
+            "Collecting nvidia-cublas-cu12==12.1.3.1 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl (410.6 MB)\n",
+            "Collecting nvidia-cufft-cu12==11.0.2.54 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cufft_cu12-11.0.2.54-py3-none-manylinux1_x86_64.whl (121.6 MB)\n",
+            "Collecting nvidia-curand-cu12==10.3.2.106 (from torch->pgmpy)\n",
+            "  Using cached nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl (56.5 MB)\n",
+            "Collecting nvidia-cusolver-cu12==11.4.5.107 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cusolver_cu12-11.4.5.107-py3-none-manylinux1_x86_64.whl (124.2 MB)\n",
+            "Collecting nvidia-cusparse-cu12==12.1.0.106 (from torch->pgmpy)\n",
+            "  Using cached nvidia_cusparse_cu12-12.1.0.106-py3-none-manylinux1_x86_64.whl (196.0 MB)\n",
+            "Collecting nvidia-nccl-cu12==2.20.5 (from torch->pgmpy)\n",
+            "  Using cached nvidia_nccl_cu12-2.20.5-py3-none-manylinux2014_x86_64.whl (176.2 MB)\n",
+            "Collecting nvidia-nvtx-cu12==12.1.105 (from torch->pgmpy)\n",
+            "  Using cached nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (99 kB)\n",
+            "Requirement already satisfied: triton==2.3.0 in /usr/local/lib/python3.10/dist-packages (from torch->pgmpy) (2.3.0)\n",
+            "Collecting nvidia-nvjitlink-cu12 (from nvidia-cusolver-cu12==11.4.5.107->torch->pgmpy)\n",
+            "  Downloading nvidia_nvjitlink_cu12-12.5.40-py3-none-manylinux2014_x86_64.whl (21.3 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m21.3/21.3 MB\u001b[0m \u001b[31m61.2 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: six in /usr/local/lib/python3.10/dist-packages (from patsy>=0.5.6->statsmodels->pgmpy) (1.16.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.10/dist-packages (from jinja2->torch->pgmpy) (2.1.5)\n",
+            "Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.10/dist-packages (from sympy->torch->pgmpy) (1.3.0)\n",
+            "Installing collected packages: nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, nvidia-cusparse-cu12, nvidia-cudnn-cu12, nvidia-cusolver-cu12, pgmpy\n",
+            "Successfully installed nvidia-cublas-cu12-12.1.3.1 nvidia-cuda-cupti-cu12-12.1.105 nvidia-cuda-nvrtc-cu12-12.1.105 nvidia-cuda-runtime-cu12-12.1.105 nvidia-cudnn-cu12-8.9.2.26 nvidia-cufft-cu12-11.0.2.54 nvidia-curand-cu12-10.3.2.106 nvidia-cusolver-cu12-11.4.5.107 nvidia-cusparse-cu12-12.1.0.106 nvidia-nccl-cu12-2.20.5 nvidia-nvjitlink-cu12-12.5.40 nvidia-nvtx-cu12-12.1.105 pgmpy-0.1.25\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#bayesian-network\n",
+        "from pgmpy.models import BayesianNetwork\n",
+        "from pgmpy.estimators import BayesianEstimator\n",
+        "from pgmpy.inference import VariableElimination\n",
+        "import pandas as pd\n",
+        "data = pd.DataFrame(data={'Rain': ['No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'No'],\n",
+        "                          'TrafficJam': ['Yes', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'No', 'No'],\n",
+        "                          'ArriveLate': ['Yes', 'No', 'Yes', 'No', 'No', 'No', 'Yes', 'No']})\n",
+        "model = BayesianNetwork([('Rain', 'TrafficJam'), ('TrafficJam', 'ArriveLate')])\n",
+        "model.fit(data, estimator=BayesianEstimator)\n",
+        "cpds = model.get_cpds()\n",
+        "for cpd in cpds:\n",
+        "    print(\"CPD for variable:\", cpd.variable)\n",
+        "    print(cpd)\n",
+        "inference = VariableElimination(model)\n",
+        "query_result = inference.query(variables=['ArriveLate'], evidence={'Rain': 'Yes'})\n",
+        "print(query_result)\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kkcYhTlHQd8H",
+        "outputId": "f387eb49-e13d-4c73-d21e-d41948b59cba"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "CPD for variable: Rain\n",
+            "+-----------+----------+\n",
+            "| Rain(No)  | 0.423077 |\n",
+            "+-----------+----------+\n",
+            "| Rain(Yes) | 0.576923 |\n",
+            "+-----------+----------+\n",
+            "CPD for variable: TrafficJam\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| Rain            | Rain(No)           | Rain(Yes)           |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| TrafficJam(No)  | 0.4090909090909091 | 0.43333333333333335 |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| TrafficJam(Yes) | 0.5909090909090909 | 0.5666666666666667  |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "CPD for variable: ArriveLate\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| TrafficJam      | TrafficJam(No)     | TrafficJam(Yes)     |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| ArriveLate(No)  | 0.5909090909090909 | 0.5666666666666667  |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "| ArriveLate(Yes) | 0.4090909090909091 | 0.43333333333333335 |\n",
+            "+-----------------+--------------------+---------------------+\n",
+            "+-----------------+-------------------+\n",
+            "| ArriveLate      |   phi(ArriveLate) |\n",
+            "+=================+===================+\n",
+            "| ArriveLate(No)  |            0.5772 |\n",
+            "+-----------------+-------------------+\n",
+            "| ArriveLate(Yes) |            0.4228 |\n",
+            "+-----------------+-------------------+\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
